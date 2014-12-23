@@ -1,0 +1,51 @@
+#include <reg51.h>
+#include <stdio.h>
+#include <intrins.h>
+#define OSC 11059200
+#define BAUDRATE 9600
+sbit CLK=P1^0;
+sbit DATA=P1^1;
+sbit CS=P1^2;
+unsigned int ADConvert(void)
+{
+  int i;
+  unsigned int ad;
+  ad=0;
+  DATA=1;
+  CS=0;
+  for(i=0;i<10;i++)
+  {
+  ad<<=1;
+	CLK=0;
+	_nop_();
+	_nop_();
+	_nop_();
+	CLK=1;
+	if(DATA) ad|=0x01;
+	else ad&=0xFFFE;
+  }  
+  CS=1;
+  return ad;
+}
+void main(void)
+{
+  unsigned int i,j,ad;
+  float adf;
+  TMOD=0x20;
+  SCON=0x50;
+  PCON|=0x80;
+  TL1=256-(OSC/12/16/BAUDRATE);
+  TH1=256-(OSC/12/16/BAUDRATE);
+  TR1=1;
+  TI=1;
+  printf("\r\nTLC1549 test starting...");
+  while(1)
+  {
+    for(j=0;j<10;j++) for(i=0;i<10000;i++);
+	ad=ADConvert();
+	ad=ADConvert();
+	adf=(ad*5.0)/1024.0;
+	printf("\r\tSampled! Data=%04X(X),%u(D) 电压=%4.2fv",ad,ad,adf);
+  }
+}
+
